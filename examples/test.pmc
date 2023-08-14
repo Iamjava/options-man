@@ -1,0 +1,16 @@
+AUTH:
+  GET /sas/sdgg/lla
+  POST /
+  BODY:
+    abc: 1239123.8540000
+    ddopfj: "skfas"
+    asdaf: JSON
+      xyz: 1234123
+      asdf: "kfkd"
+    my_list:
+      - 93812
+      - JSON
+        bbc: "weir"
+        list2:
+          - "asdf"
+          - "gagd"AUTH:

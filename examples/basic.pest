@@ -1,0 +1,47 @@
+JSON  = _{ "JSON" }
+QUOTE = _{ "\"" }
+
+request_ident = @{ (ASCII_ALPHA_UPPER | "_")+ }
+ident         = @{ (ASCII_ALPHANUMERIC | "_")+ }
+ident_value   = _{ QUOTE ~ string ~ QUOTE | number }
+string        =  { ((ASCII_ALPHANUMERIC | "_")+) }
+number        = @{ "-"? ~ ('1'..'9') ~ (ASCII_DIGIT)* ~ ("." ~ (ASCII_DIGIT)+)? }
+
+indentation = _{ (" " | "\t")+ }
+
+request_type = { "GET" | "POST" | "PUT" | "DELETE" }
+
+path_segment =  { ASCII_ALPHA+ }
+path         = ${ (("/" ~ path_segment)+ | "/") }
+
+request = {
+    request_ident ~ ":" ~ NEWLINE ~ request_body ~ WHITE_SPACE*
+}
+
+request_body = { PUSH(indentation) ~ (first_request_stmt ~ (NEWLINE ~ follow_request_stmt)*)? ~ DROP }
+
+first_request_stmt  = _{ request_stmt }
+follow_request_stmt = _{ PEEK_ALL ~ request_stmt }
+
+request_stmt = _{ request_method | body }
+
+request_method = ${ request_type ~ WHITE_SPACE* ~ path }
+body           = ${
+    "BODY:" ~ NEWLINE ~ PEEK_ALL ~ PUSH(indentation) ~ unnamed_object ~ DROP
+}
+
+object          =  { JSON ~ NEWLINE ~ PEEK_ALL ~ PUSH(indentation) ~ unnamed_object ~ DROP }
+unnamed_object  = _{ first_body_ass ~ (NEWLINE ~ follow_body_ass)* }
+first_body_ass  = _{ ass_stmt }
+follow_body_ass = _{ PEEK_ALL ~ ass_stmt }
+
+list             =  { first_list_elem ~ (NEWLINE ~ follow_list_elem)* }
+first_list_elem  = _{ "-" ~ WHITE_SPACE+ ~ list_value }
+follow_list_elem = _{ PEEK_ALL ~ "-" ~ WHITE_SPACE+ ~ list_value }
+
+list_value = { object | list | ident_value }
+
+ass_stmt  =  { ident ~ ":" ~ ass_value }
+ass_value = _{ (NEWLINE ~ PEEK_ALL ~ PUSH(indentation) ~ list ~ DROP) | (WHITE_SPACE+ ~ (object | ident_value)) }
+
+requests = _{ SOI ~ request* ~ EOI }
